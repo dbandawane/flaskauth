@@ -1,6 +1,10 @@
 # app.py
+import random
+import string
+from functools import wraps
+
 import pytz as pytz
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 import jwt
@@ -17,13 +21,6 @@ app.config['SECRET_KEY'] = 'your_secret_key'
 migrate = Migrate(app, db)
 
 
-@app.route('/', methods=['GET'])
-def index():
-    users = User.query.all()
-    login_attempts = LoginAttempt.query.all()
-    return render_template('index.html', users=users, login_attempts=login_attempts)
-
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -32,6 +29,7 @@ class User(db.Model):
     phone_number = db.Column(db.String(10), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Kolkata')))
     login_attempts = db.relationship('LoginAttempt', backref='user', lazy=True)
+    verification_code = db.Column(db.String(6))
 
 
 class LoginAttempt(db.Model):
@@ -41,7 +39,14 @@ class LoginAttempt(db.Model):
     attempts = db.Column(db.Integer, default=0)
 
 
-# Other routes...
+@app.route('/', methods=['GET'])
+def index():
+    users = User.query.all()
+    login_attempts = LoginAttempt.query.all()
+    return render_template('index.html', users=users, login_attempts=login_attempts)
+
+
+# routes...
 
 
 @app.route('/login', methods=['POST'])
@@ -62,7 +67,7 @@ def login():
         if login_atm:
             login_atm.attempts += 1
             db.session.commit()
-            if login_atm.attempts >=3:
+            if login_atm.attempts >= 3:
                 return jsonify({'message': 'Too many unsuccessful login attempts', 'st': '201'})
         print(login_atm, 'ddddddd')
         return jsonify({'message': 'Incorrect password', 'st': '201'})
@@ -111,6 +116,110 @@ def signup():
     return jsonify({'message': 'User registered successfully', 'st': '201'})
 
 
+@app.route('/forgot_password', methods=['POST'])
+def forgot_password():
+    data = request.get_json()
+    email = data.get('email')
+    if not email:
+        return jsonify({'message': 'Please provide email', 'st': '201'})
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({'message': 'Email not found', 'st': '201'})
+
+    # Generate a verification code
+    verification_code = ''.join(random.choices(string.digits, k=6))
+    user.verification_code = verification_code
+    db.session.commit()
+
+    # verification code via email
+    # send_verification_email(user.email, verification_code)
+
+    return jsonify({'message': 'Verification code sent successfully', 'st': '200'})
+
+
+# Change Password route
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    data = request.get_json()
+    verification_code = data.get('verification_code')
+    new_password = data.get('new_password')
+    email = data.get('email')
+
+    if not verification_code and new_password:
+        return jsonify({'message': 'Please provide required fields', 'st': '201'})
+
+    user = User.query.filter_by(email=email, verification_code=verification_code).first()
+
+    if not user:
+        return jsonify({'message': 'Invalid verification code', 'st': '201'})
+
+    # Hash the received new password
+    hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    user.password = hashed_password
+    user.verification_code = None  # Clear the verification code after changing the password
+    db.session.commit()
+
+    return jsonify({'message': 'Password changed successfully', 'st': '200'})
+
+
+# Function to send a verification code via email
+def send_verification_email(to_email, verification_code):
+    subject = 'Forgot Password - Verification Code'
+    body = f'Your verification code is: {verification_code}'
+
+    message = Message(subject, recipients=[to_email], body=body)
+    mail.send(message)
+    return ''
+
+
+def login_required(view_func):
+    @wraps(view_func)
+    def decorated_function(*args, **kwargs):
+        # Extract JWT token from the request headers
+        token = request.headers.get('Authorization')
+
+        if not token:
+            return jsonify({'message': 'Authorization token missing', 'st': '201'}), 401
+
+        try:
+            # Decode the token to check its validity
+            decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            g.user_id = decoded_token.get('user_id')  # Store user_id in Flask's global context (g)
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired', 'st': '201'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Invalid token', 'st': '201'}), 401
+
+        return view_func(*args, **kwargs)
+
+    return decorated_function
+
+
+@app.route('/user_details', methods=['GET'])
+@login_required
+def user_details():
+    # Access user_id from Flask's global context (g)
+    user_id = g.user_id
+
+    # Retrieve additional data based on user_id
+    user = User.query.filter_by(id=user_id).first()
+
+    if not user:
+        return jsonify({'message': 'User not found', 'st': '404'}), 404
+
+    user_details = {
+        'id': user.id,
+        'name': user.name,
+        'email': user.email,
+        'phone_number': user.phone_number,
+        'created_at': user.created_at.strftime('%Y-%m-%d %H:%M:%S')
+    }
+
+    return jsonify({'user_details': user_details, 'st': '200'})
+
+
 def get_login_attempt(user):
     today_start = datetime.now()
     login_attempt = LoginAttempt.query.filter(
@@ -125,8 +234,6 @@ def get_login_attempt(user):
 
     return login_attempt
 
-
-# Implement other routes...
 
 if __name__ == '__main__':
     app.run(debug=True)
