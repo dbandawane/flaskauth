@@ -1,4 +1,4 @@
-# **Flask JWT Authentication Example**
+# **Flask Registration and Authentication **
 
 This is a simple Flask web application demonstrating user registration and authentication using flask, sqlite, SQLAlchemy and docker.
 
