@@ -13,10 +13,10 @@ from flask_migrate import Migrate
 from sqlalchemy import func
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flaskauth.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flaskauth1.db'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = 'fdjhdfjffd'
 
 migrate = Migrate(app, db)
 

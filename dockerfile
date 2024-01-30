@@ -15,6 +15,7 @@ ENV PATH="/app/venv/bin:$PATH"
 RUN pip install -r requirement.txt
 
 # Run Flask-Migrate commands to create and apply migrations
+RUN flask db init
 RUN flask db migrate
 RUN flask db upgrade
 
