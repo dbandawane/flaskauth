@@ -1,0 +1,6 @@
+# Run these commands in your terminal
+flask db init
+flask db migrate -m "initial migration"
+flask db upgrade
+flask db migrate -m "your_migration_name"
+flask db upgrade

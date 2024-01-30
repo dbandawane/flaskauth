@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Project</title>
+</head>
+<body>
+
+<h2 style="text-align: center;">Welcome to Flask Auth</h2>
+<div style="text-align: left;">
+    <h2>Users</h2>
+<table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.phone_number }}</td>
+                    <td>{{ user.created_at }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+<div>
+    <h2>Login Attempts</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Email</th>
+                <th>Timestamp</th>
+                <th>Attempts</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attempt in login_attempts %}
+                <tr>
+                    <td>{{ attempt.user_id }}</td>
+                    <td>{{ attempt.user.email }}</td>
+                    <td>{{ attempt.timestamp }}</td>
+                    <td>{{ attempt.attempts }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

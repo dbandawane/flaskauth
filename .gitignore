@@ -1,0 +1,44 @@
+# Virtual environment
+venv/
+
+# Byte-compiled files
+*.pyc
+*.pyo
+__pycache__/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+
+# Database
+db.sqlite
+
+# IDE files
+.vscode/
+.idea/
+
+# Compiled Python files
+*.pyc
+
+# Environment configuration
+.env
+
+# Ignore local configuration
+instance/
+
+# Flask upload folder
+uploads/
+
+# Compiled C extensions
+*.so
+
+# Mac OS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
