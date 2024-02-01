@@ -2,7 +2,6 @@
 import random
 import string
 from functools import wraps
-
 import pytz as pytz
 from flask import Flask, request, jsonify, render_template, g
 from flask_sqlalchemy import SQLAlchemy
@@ -69,10 +68,8 @@ def login():
             db.session.commit()
             if login_atm.attempts >= 3:
                 return jsonify({'message': 'Too many unsuccessful login attempts', 'st': '201'})
-        print(login_atm, 'ddddddd')
+     #   print(login_atm, 'ddddddd')
         return jsonify({'message': 'Incorrect password', 'st': '201'})
-
-    # Implement 3 unsuccessful login attempt logic here...
 
     # Generate JWT token
     token = jwt.encode({'user_id': user.id, 'exp': datetime.now() + timedelta(minutes=30)},
@@ -155,16 +152,16 @@ def change_password():
     if not user:
         return jsonify({'message': 'Invalid verification code', 'st': '201'})
 
-    # Hash the received new password
+    # Hash the password
     hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
     user.password = hashed_password
-    user.verification_code = None  # Clear the verification code after changing the password
+    user.verification_code = None
     db.session.commit()
 
     return jsonify({'message': 'Password changed successfully', 'st': '200'})
 
 
-# Function to send a verification code via email
+# send a verification code via email
 def send_verification_email(to_email, verification_code):
     subject = 'Forgot Password - Verification Code'
     body = f'Your verification code is: {verification_code}'
@@ -200,10 +197,9 @@ def login_required(view_func):
 @app.route('/user_details', methods=['GET'])
 @login_required
 def user_details():
-    # Access user_id from Flask's global context (g)
+    # user_id from Flask's global context (g)
     user_id = g.user_id
 
-    # Retrieve additional data based on user_id
     user = User.query.filter_by(id=user_id).first()
 
     if not user:

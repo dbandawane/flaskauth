@@ -13,5 +13,5 @@ docker run -p 5000:5000 dockerfile
 
 # push to repository
 docker login
-docker tag your-image-name username/repository:tag
-docker push username/repository:tag
+docker tag flaskim bandawanedeep1596/repository:tag
+docker push bandawanedeep1596/repository:tag
